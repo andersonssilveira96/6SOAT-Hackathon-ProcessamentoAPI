@@ -42,7 +42,7 @@ namespace FIAPX.Processamento.Infra.MessageBroker
 
                 Console.WriteLine($"Arquivo: { JsonSerializer.Serialize(message) }");
 
-                await _arquivoUseCase.UpdateStatus(arquivo.Id, (int)arquivo.Status);
+               await _arquivoUseCase.ProcessFile(arquivo);
             };
 
             await _channel.BasicConsumeAsync(queue: "arquivos-novos", autoAck: false, consumer: consumer);
