@@ -5,8 +5,11 @@ using AutoMapper;
 using FFMpegCore;
 using FIAPX.Processamento.Application.DTOs;
 using FIAPX.Processamento.Application.Factories;
+using FIAPX.Processamento.Domain.Entities;
+using FIAPX.Processamento.Domain.Enum;
 using FIAPX.Processamento.Domain.Interfaces.Repositories;
 using FIAPX.Processamento.Domain.Producer;
+using System.IO.Compression;
 
 namespace FIAPX.Processamento.Application.UseCase
 {
@@ -25,51 +28,73 @@ namespace FIAPX.Processamento.Application.UseCase
             _mapper = mapper;
             _messageBrokerProducer = messageBrokerProducer;
         }
+
         public async Task ProcessFile(ArquivoDto arquivoDto)
         {
+            var arquivo = ArquivoFactory.Create(arquivoDto);
+
             try
             {
-                var arquivo = ArquivoFactory.Create(arquivoDto);
+                arquivo.UpdateStatus(StatusEnum.Processando);
 
                 await _arquivoRepository.CreateFile(arquivo);
 
-                // 1. Baixar o vídeo do S3
+                await _messageBrokerProducer.SendMessageAsync(arquivo);
+
                 string localVideoPath = await DownloadFileFromS3(arquivoDto.Id.ToString(), arquivo.ContentType);
 
-                // 2. Dividir o vídeo usando FFmpeg
                 string outputFolder = Path.Combine(Path.GetTempPath(), "splitted_videos");
                 Directory.CreateDirectory(outputFolder);
 
-                // Intervalo entre os snapshots (em segundos)
                 int intervalInSeconds = 5;
 
-                // Gerar snapshots
                 List<string> snapshots = await GenerateSnapshots(localVideoPath, outputFolder, intervalInSeconds);
 
-                // Fazer upload das snapshots para o S3
-                foreach (var snapshot in snapshots)
-                {
-                    string s3Key = $"snapshots/{Path.GetFileName(snapshot)}"; // Caminho no bucket
-                    await UploadFileToS3(snapshot, s3Key);
-                }
+                string zipFilePath = await CreateZipFile(snapshots);
 
-                Console.WriteLine("Processo concluído com sucesso!");
-            }
-            catch (AmazonS3Exception e)
-            {
-                Console.WriteLine($"Erro ao acessar o S3: {e.Message}");                
+                string s3Key = $"{arquivoDto.Id.ToString()}/snapshots.zip";
+                await UploadFileToS3(zipFilePath, s3Key);
+
+                arquivo.UpdateStatus(StatusEnum.Processado);
+
+                await _messageBrokerProducer.SendMessageAsync(arquivo);
+
+                await _arquivoRepository.Update(arquivo);
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Erro geral: {e.Message}");              
+                Console.WriteLine($"Erro geral: {e.Message}");
+                arquivo.UpdateStatus(StatusEnum.Erro);
+
+                await _arquivoRepository.Update(arquivo);
             }
+        }
+        private async Task<string> CreateZipFile(List<string> snapshots)
+        {
+            string zipFilePath = Path.Combine(Path.GetTempPath(), "snapshots.zip");
+
+            using (var zipFileStream = new FileStream(zipFilePath, FileMode.Create))
+            using (var archive = new ZipArchive(zipFileStream, ZipArchiveMode.Create))
+            {
+                foreach (var snapshot in snapshots)
+                {
+                    var zipEntry = archive.CreateEntry(Path.GetFileName(snapshot), CompressionLevel.Fastest);
+
+                    using (var entryStream = zipEntry.Open())
+                    using (var snapshotStream = File.OpenRead(snapshot))
+                    {
+                        await snapshotStream.CopyToAsync(entryStream);
+                    }
+                }
+            }
+
+            return zipFilePath;
         }
 
         private async Task<string> DownloadFileFromS3(string s3Key, string contentType)
         {
             string localFilePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(s3Key));
 
-            Console.WriteLine($"Baixando vídeo de '{s3Key}'...");
             var request = new GetObjectRequest
             {
                 BucketName = _s3BucketName,
@@ -82,36 +107,28 @@ namespace FIAPX.Processamento.Application.UseCase
                 await response.ResponseStream.CopyToAsync(fileStream);
             }
 
-            Console.WriteLine($"Vídeo baixado para: {localFilePath}");
             return localFilePath;
         }
 
         private static async Task<List<string>> GenerateSnapshots(string videoPath, string outputDirectory, int intervalInSeconds)
         {
-            Console.WriteLine($"Gerando snapshots a cada {intervalInSeconds} segundos...");
-
-            // Monta o padrão de saída para os arquivos (snapshot_001.jpg, snapshot_002.jpg, etc.)
             string outputPattern = Path.Combine(outputDirectory, "snapshot_%03d.jpg");
             var generatedSnapshots = new List<string>();
 
-            // Executa o comando FFmpeg para gerar os snapshots
             await FFMpegArguments
                 .FromFileInput(videoPath)
                 .OutputToFile(outputPattern, overwrite: true, options => options
-                    .WithCustomArgument($"-vf fps=1/{intervalInSeconds}") // Frame por segundo baseado no intervalo
-                    .WithCustomArgument("-q:v 2")) // Qualidade da imagem (2 é alta qualidade)
+                    .WithCustomArgument($"-vf fps=1/{intervalInSeconds}") 
+                    .WithCustomArgument("-q:v 2")) 
                 .ProcessAsynchronously();
 
-            // Adicionar os arquivos gerados à lista
             generatedSnapshots.AddRange(Directory.GetFiles(outputDirectory, "*.jpg"));
 
-            Console.WriteLine($"Snapshots gerados: {generatedSnapshots.Count} arquivos.");
             return generatedSnapshots;
         }
 
         private async Task UploadFileToS3(string filePath, string s3Key)
         {
-            Console.WriteLine($"Enviando '{filePath}' para '{s3Key}'...");
             var putRequest = new PutObjectRequest
             {
                 BucketName = _s3BucketName,
@@ -120,7 +137,6 @@ namespace FIAPX.Processamento.Application.UseCase
             };
 
             await s3Client.PutObjectAsync(putRequest);
-            Console.WriteLine($"Arquivo enviado: {s3Key}");
         }
 
         private static string GetVideoExtensionFromContentType(string contentType)

@@ -19,7 +19,7 @@ namespace FIAPX.Processamento.Infra.MessageBroker
 
             using var channel = await connection.CreateChannelAsync();
 
-            await channel.QueueDeclareAsync("arquivos-novos", exclusive: false);
+            await channel.QueueDeclareAsync("arquivos-atualizados", exclusive: false);
 
             JsonSerializerOptions options = new()
             {
@@ -30,7 +30,7 @@ namespace FIAPX.Processamento.Infra.MessageBroker
             string json = JsonSerializer.Serialize(message, options);
             var body = Encoding.UTF8.GetBytes(json);
 
-            await channel.BasicPublishAsync(exchange: "", routingKey: "arquivos-novos", body: body);
+            await channel.BasicPublishAsync(exchange: "", routingKey: "arquivos-atualizados", body: body);
         }
     }
 }

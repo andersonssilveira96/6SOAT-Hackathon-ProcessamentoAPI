@@ -17,6 +17,6 @@ namespace FIAPX.Processamento.Domain.Entities
         public string ContentType { get; private set; }
         public StatusEnum Status { get; private set; }
         public long UserId { get; private set; }
-        public void AtualizarStatus(StatusEnum status) => Status = status;
+        public void UpdateStatus(StatusEnum status) => Status = status;
     }
 }
