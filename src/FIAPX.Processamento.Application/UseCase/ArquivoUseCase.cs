@@ -5,6 +5,7 @@ using AutoMapper;
 using FFMpegCore;
 using FIAPX.Processamento.Application.DTOs;
 using FIAPX.Processamento.Application.Factories;
+using FIAPX.Processamento.Application.Services;
 using FIAPX.Processamento.Domain.Entities;
 using FIAPX.Processamento.Domain.Enum;
 using FIAPX.Processamento.Domain.Interfaces.Repositories;
@@ -18,15 +19,17 @@ namespace FIAPX.Processamento.Application.UseCase
         private readonly IArquivoRepository _arquivoRepository;
         private readonly IMapper _mapper;
         private readonly IMessageBrokerProducer _messageBrokerProducer;
-        private readonly string _s3BucketName = "fiapxarquivosbucket";
-        private static readonly RegionEndpoint BucketRegion = RegionEndpoint.USEast1; 
-        private static readonly IAmazonS3 s3Client = new AmazonS3Client(BucketRegion);
+        private readonly IEmailService _emailService;
+        private readonly string _s3BucketName = "fiapxarquivosbucket"; 
+        private readonly IAmazonS3 _s3Client;
 
-        public ArquivoUseCase(IArquivoRepository arquivoRepository, IMapper mapper, IMessageBrokerProducer messageBrokerProducer)
+        public ArquivoUseCase(IArquivoRepository arquivoRepository, IMapper mapper, IMessageBrokerProducer messageBrokerProducer, IEmailService emailService, IAmazonS3 s3Client)
         {
             _arquivoRepository = arquivoRepository;
             _mapper = mapper;
             _messageBrokerProducer = messageBrokerProducer;
+            _emailService = emailService;
+            _s3Client = s3Client;
         }
 
         public async Task ProcessFile(ArquivoDto arquivoDto)
@@ -67,6 +70,12 @@ namespace FIAPX.Processamento.Application.UseCase
                 arquivo.UpdateStatus(StatusEnum.Erro);
 
                 await _arquivoRepository.Update(arquivo);
+
+                await _messageBrokerProducer.SendMessageAsync(arquivo);
+
+                await _emailService.SendEmailAsync("andersonssilveira96@gmail.com", "cepol29137@halbov.com", "Teste envio", e.Message);
+                
+                throw;
             }
         }
         private async Task<string> CreateZipFile(List<string> snapshots)
@@ -101,7 +110,7 @@ namespace FIAPX.Processamento.Application.UseCase
                 Key = $"{s3Key}/{s3Key}{GetVideoExtensionFromContentType(contentType)}",                
             };
 
-            using (var response = await s3Client.GetObjectAsync(request))
+            using (var response = await _s3Client.GetObjectAsync(request))
             using (var fileStream = File.Create(localFilePath))
             {
                 await response.ResponseStream.CopyToAsync(fileStream);
@@ -136,7 +145,7 @@ namespace FIAPX.Processamento.Application.UseCase
                 FilePath = filePath
             };
 
-            await s3Client.PutObjectAsync(putRequest);
+            await _s3Client.PutObjectAsync(putRequest);
         }
 
         private static string GetVideoExtensionFromContentType(string contentType)

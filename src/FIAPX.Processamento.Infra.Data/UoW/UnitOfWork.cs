@@ -1,7 +1,9 @@
 ﻿using FIAPX.Processamento.Infra.Data.Context;
+using System.Diagnostics.CodeAnalysis;
 
 namespace FIAPX.Processamento.Infra.Data.UoW
 {
+    [ExcludeFromCodeCoverage]
     public class UnitOfWork : IUnitOfWork
     {
         private readonly FIAPXContext _dataContext;

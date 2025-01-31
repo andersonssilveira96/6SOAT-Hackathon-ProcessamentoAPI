@@ -35,8 +35,6 @@ namespace FIAPX.Processamento.Infra.Data.Repositories
 
             _context.Arquivo.Update(entry.Entity);
 
-            await _context.SaveChangesAsync();
-
             return arquivo;
         }
     }

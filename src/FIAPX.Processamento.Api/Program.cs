@@ -6,6 +6,10 @@ using FIAPX.Processamento.Infra.Data.Context;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using FIAPX.Processamento.Domain.Consumer;
+using Amazon.S3;
+using Microsoft.AspNetCore.Builder;
+using Amazon.Extensions.NETCore.Setup;
+using Amazon;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +28,10 @@ builder.Services.AddInfraMessageBrokerServices();
 
 builder.Services.AddTransient<UnitOfWorkMiddleware>();
 builder.Services.AddDbContext<FIAPXContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
+builder.Services.AddAWSService<IAmazonS3>(new AWSOptions
+{
+    Region = RegionEndpoint.USEast1
+});
 
 var app = builder.Build();
 

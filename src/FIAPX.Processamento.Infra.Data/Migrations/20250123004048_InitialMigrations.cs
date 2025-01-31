@@ -1,10 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
+using System.Diagnostics.CodeAnalysis;
 
 #nullable disable
 
 namespace FIAPX.Processamento.Infra.Data.Migrations
 {
     /// <inheritdoc />
+    /// 
+    [ExcludeFromCodeCoverage]
     public partial class InitialMigrations : Migration
     {
         /// <inheritdoc />
