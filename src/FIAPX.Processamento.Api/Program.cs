@@ -10,6 +10,7 @@ using Amazon.S3;
 using Microsoft.AspNetCore.Builder;
 using Amazon.Extensions.NETCore.Setup;
 using Amazon;
+using SendGrid;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +33,10 @@ builder.Services.AddAWSService<IAmazonS3>(new AWSOptions
 {
     Region = RegionEndpoint.USEast1
 });
+// Adiciona a configuração do SendGridClient
+builder.Services.AddSingleton<ISendGridClient>(provider =>
+    new SendGridClient(builder.Configuration["SendGridApiKey"]));
+
 
 var app = builder.Build();
 

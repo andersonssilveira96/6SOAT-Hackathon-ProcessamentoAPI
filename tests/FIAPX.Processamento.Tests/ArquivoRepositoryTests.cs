@@ -100,5 +100,18 @@ namespace FIAPX.Processamento.Tests
                 Assert.Equal(StatusEnum.Processado, updated.Status);
             }
         }
+
+        [Fact]
+        public async Task CreateFile_ShouldReturnException_WhenNull()
+        {
+            // Arrange
+            using (var context = new FIAPXContext(_options))
+            {
+                var repository = new ArquivoRepository(context);
+
+                // Act & Assert
+                await Assert.ThrowsAsync<ArgumentNullException>(async () => await repository.CreateFile((Arquivo)null));
+            }           
+        }
     }
 }

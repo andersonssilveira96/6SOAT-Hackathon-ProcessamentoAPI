@@ -10,7 +10,7 @@ using FIAPX.Processamento.Domain.Interfaces.Repositories;
 using FIAPX.Processamento.Domain.Producer;
 using Moq;
 
-namespace FIAPX.Processamento.Domain.Tests
+namespace FIAPX.Processamento.Tests
 {
     public class ArquivoUseCaseTests
     {
@@ -42,7 +42,7 @@ namespace FIAPX.Processamento.Domain.Tests
         public async Task ProcessFile_ShouldCallDependencies_WhenSuccess()
         {
             // Arrange
-            var arquivoDto = new ArquivoDto { Id = Guid.NewGuid(), ContentType = "video/mp4", FileName = "teste.mp4" };
+            var arquivoDto = new ArquivoDto { Id = Guid.NewGuid(), ContentType = "video/mp4", FileName = "teste.mp4", UserId = 0 };
             var arquivo = new Arquivo(arquivoDto.Id, "teste.mp4", "video/mp4", StatusEnum.Cadastrado, 0);
             var basePath = AppDomain.CurrentDomain.BaseDirectory; // Diretório base da aplicação
             var filePath = Path.Combine(basePath, "assets", "SmallVideo.mp4");

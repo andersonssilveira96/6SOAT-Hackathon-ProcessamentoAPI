@@ -6,25 +6,24 @@ namespace FIAPX.Processamento.Application.Services
 {
     public class EmailService : IEmailService
     {
-        private readonly string _sendGridApiKey;
+        private readonly ISendGridClient _sendGridClient;
 
-        public EmailService(IConfiguration configuration)
+        public EmailService(ISendGridClient sendGridClient)
         {
-            _sendGridApiKey = configuration["SendGridApiKey"];
+            _sendGridClient = sendGridClient;
         }
 
         public async Task SendEmailAsync(string senderEmail, string recipientEmail, string subject, string body)
         {
             try
             {
-                var client = new SendGridClient(_sendGridApiKey); // Autentica com a API Key
                 var from = new EmailAddress(senderEmail, "FIAP X");
                 var to = new EmailAddress(recipientEmail);
-                var plainTextContent = body; 
+                var plainTextContent = body;
                 var htmlContent = body;
                 var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
-               
-                var response = await client.SendEmailAsync(msg);
+
+                var response = await _sendGridClient.SendEmailAsync(msg);
 
                 Console.WriteLine($"E-mail enviado! Status: {response.StatusCode}");
             }
@@ -34,4 +33,5 @@ namespace FIAPX.Processamento.Application.Services
             }
         }
     }
+
 }
