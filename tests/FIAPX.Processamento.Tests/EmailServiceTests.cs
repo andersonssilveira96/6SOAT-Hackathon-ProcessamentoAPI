@@ -42,6 +42,22 @@
             // Assert
             _sendGridClientMock.Verify(c => c.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()), Times.Once);
         }
-    }
+        [Fact]
+        public async Task SendEmailAsync_WhenSendGridThrowsException_ShouldHandleException()
+        {
+            // Arrange
+            var senderEmail = "sender@example.com";
+            var recipientEmail = "recipient@example.com";
+            var subject = "Test Email";
+            var body = "This is a test email.";
 
+            _sendGridClientMock
+                .Setup(c => c.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("SendGrid failure"));
+            var emailService = new EmailService(_sendGridClientMock.Object);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => emailService.SendEmailAsync(senderEmail, recipientEmail, subject, body));
+        }
+    }
 }

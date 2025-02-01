@@ -30,6 +30,7 @@ namespace FIAPX.Processamento.Application.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Erro ao enviar e-mail: {ex.Message}");
+                throw;
             }
         }
     }
