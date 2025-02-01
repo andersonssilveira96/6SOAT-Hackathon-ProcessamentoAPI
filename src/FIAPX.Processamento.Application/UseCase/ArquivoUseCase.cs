@@ -104,10 +104,14 @@ namespace FIAPX.Processamento.Application.UseCase
         {
             string localFilePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(s3Key));
 
+            var extension = GetVideoExtensionFromContentType(contentType);
+            if (string.IsNullOrEmpty(extension))
+                throw new Exception("Invalid extension");
+
             var request = new GetObjectRequest
             {
                 BucketName = _s3BucketName,
-                Key = $"{s3Key}/{s3Key}{GetVideoExtensionFromContentType(contentType)}",                
+                Key = $"{s3Key}/{s3Key}{extension}",                
             };
 
             using (var response = await _s3Client.GetObjectAsync(request))

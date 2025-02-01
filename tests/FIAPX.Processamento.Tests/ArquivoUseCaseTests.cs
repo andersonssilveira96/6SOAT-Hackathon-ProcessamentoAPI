@@ -94,5 +94,22 @@ namespace FIAPX.Processamento.Tests
             _messageBrokerProducerMock.Verify(producer => producer.SendMessageAsync(It.IsAny<Arquivo>()), Times.Once);
             _emailServiceMock.Verify(email => email.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
+
+        [Fact]
+        public async Task CreateFile_ShouldGiveAnException_WithInvalidInput()
+        {
+            // Arrange
+            var arquivoDto = new ArquivoDto { ContentType = "video/mp25", FileName = "teste.mp4" };
+            var stream = new MemoryStream();
+            var arquivo = new Arquivo(Guid.NewGuid(), "teste.mp25", "video/mp25", StatusEnum.Cadastrado, 0);
+
+            _arquivoRepositoryMock.Setup(repo => repo.CreateFile(It.IsAny<Arquivo>())).Returns(Task.FromResult(arquivo));
+            _s3ClientMock
+                .Setup(client => client.PutObjectAsync(It.IsAny<PutObjectRequest>(), default))
+                .ReturnsAsync(new PutObjectResponse());
+            _messageBrokerProducerMock.Setup(producer => producer.SendMessageAsync(It.IsAny<Arquivo>())).Returns(Task.CompletedTask);
+
+            await Assert.ThrowsAsync<Exception>(() => _arquivoUseCase.ProcessFile(arquivoDto));
+        }
     }
 }
