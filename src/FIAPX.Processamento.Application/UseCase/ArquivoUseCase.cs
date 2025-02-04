@@ -1,12 +1,10 @@
-﻿using Amazon;
-using Amazon.S3;
+﻿using Amazon.S3;
 using Amazon.S3.Model;
 using AutoMapper;
 using FFMpegCore;
 using FIAPX.Processamento.Application.DTOs;
 using FIAPX.Processamento.Application.Factories;
 using FIAPX.Processamento.Application.Services;
-using FIAPX.Processamento.Domain.Entities;
 using FIAPX.Processamento.Domain.Enum;
 using FIAPX.Processamento.Domain.Interfaces.Repositories;
 using FIAPX.Processamento.Domain.Producer;
@@ -20,7 +18,7 @@ namespace FIAPX.Processamento.Application.UseCase
         private readonly IMapper _mapper;
         private readonly IMessageBrokerProducer _messageBrokerProducer;
         private readonly IEmailService _emailService;
-        private readonly string _s3BucketName = "fiapxarquivosbucket"; 
+        private readonly string _s3BucketName = "fiapxfilesbucket"; 
         private readonly IAmazonS3 _s3Client;
 
         public ArquivoUseCase(IArquivoRepository arquivoRepository, IMapper mapper, IMessageBrokerProducer messageBrokerProducer, IEmailService emailService, IAmazonS3 s3Client)
@@ -38,6 +36,10 @@ namespace FIAPX.Processamento.Application.UseCase
 
             try
             {
+                // Only Test
+                if (arquivoDto.FileName.Contains("GerarErro"))
+                    throw new Exception("Forçando erro para simular envio de e-mail.");
+
                 arquivo.UpdateStatus(StatusEnum.Processando);
 
                 await _arquivoRepository.CreateFile(arquivo);
@@ -66,14 +68,13 @@ namespace FIAPX.Processamento.Application.UseCase
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Erro geral: {e.Message}");
                 arquivo.UpdateStatus(StatusEnum.Erro);
 
                 await _arquivoRepository.Update(arquivo);
 
                 await _messageBrokerProducer.SendMessageAsync(arquivo);
 
-                await _emailService.SendEmailAsync("andersonssilveira96@gmail.com", "cepol29137@halbov.com", "Teste envio", e.Message);
+                await _emailService.SendEmailAsync(arquivoDto.User.Email, e.Message);
                 
                 throw;
             }

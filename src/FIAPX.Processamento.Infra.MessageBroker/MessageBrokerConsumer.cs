@@ -35,14 +35,8 @@ namespace FIAPX.Processamento.Infra.MessageBroker
             consumer.ReceivedAsync += async (model, eventArgs) => {
                 var body = eventArgs.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
-
-                Console.WriteLine($"Arquivo message received: {message}");
-
                 var arquivo = JsonSerializer.Deserialize<ArquivoDto>(message)!;
-
-                Console.WriteLine($"Arquivo: { JsonSerializer.Serialize(message) }");
-
-               await _arquivoUseCase.ProcessFile(arquivo);
+                await _arquivoUseCase.ProcessFile(arquivo);
             };
 
             await _channel.BasicConsumeAsync(queue: "arquivos-novos", autoAck: false, consumer: consumer);

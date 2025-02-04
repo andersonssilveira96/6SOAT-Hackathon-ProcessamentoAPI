@@ -8,6 +8,7 @@ namespace FIAPX.Processamento.Application.DTOs
         public required string FileName { get; set; }
         public required string ContentType { get; set; }
         public StatusEnum Status { get; set; }
-        public long UserId { get; set; }
+        public Guid UserId { get; set; }
+        public UsuarioDto User { get; set; }
     }
 }

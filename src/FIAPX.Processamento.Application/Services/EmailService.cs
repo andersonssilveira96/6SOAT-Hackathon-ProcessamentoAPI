@@ -13,15 +13,15 @@ namespace FIAPX.Processamento.Application.Services
             _sendGridClient = sendGridClient;
         }
 
-        public async Task SendEmailAsync(string senderEmail, string recipientEmail, string subject, string body)
+        public async Task SendEmailAsync(string recipientEmail, string body)
         {
             try
             {
-                var from = new EmailAddress(senderEmail, "FIAP X");
+                var from = new EmailAddress("hackathonfiapx@gmail.com", "FIAPX");
                 var to = new EmailAddress(recipientEmail);
                 var plainTextContent = body;
                 var htmlContent = body;
-                var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
+                var msg = MailHelper.CreateSingleEmail(from, to, "FIAPX - Erro de processamento", plainTextContent, htmlContent);
 
                 var response = await _sendGridClient.SendEmailAsync(msg);
 

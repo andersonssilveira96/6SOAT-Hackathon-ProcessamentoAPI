@@ -42,7 +42,7 @@ namespace FIAPX.Processamento.Tests
         public async Task ProcessFile_ShouldCallDependencies_WhenSuccess()
         {
             // Arrange
-            var arquivoDto = new ArquivoDto { Id = Guid.NewGuid(), ContentType = "video/mp4", FileName = "teste.mp4", UserId = 0 };
+            var arquivoDto = new ArquivoDto { Id = Guid.NewGuid(), ContentType = "video/mp4", FileName = "teste.mp4", UserId = Guid.Empty };
             var arquivo = new Arquivo(arquivoDto.Id, "teste.mp4", "video/mp4", StatusEnum.Cadastrado, 0);
             var basePath = AppDomain.CurrentDomain.BaseDirectory; // Diretório base da aplicação
             var filePath = Path.Combine(basePath, "assets", "SmallVideo.mp4");
