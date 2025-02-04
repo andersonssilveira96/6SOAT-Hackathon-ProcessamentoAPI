@@ -42,7 +42,7 @@ namespace FIAPX.Processamento.Tests
         public async Task ProcessFile_ShouldCallDependencies_WhenSuccess()
         {
             // Arrange
-            var arquivoDto = new ArquivoDto { Id = Guid.NewGuid(), ContentType = "video/mp4", FileName = "teste.mp4", UserId = Guid.Empty };
+            var arquivoDto = new ArquivoDto { Id = Guid.NewGuid(), ContentType = "video/mp4", FileName = "teste.mp4", UserId = Guid.Empty, User = new UsuarioDto { Id = Guid.Empty, Email = "teste@teste.com.br", Name = "Teste" } };
             var arquivo = new Arquivo(arquivoDto.Id, "teste.mp4", "video/mp4", StatusEnum.Cadastrado, 0);
             var basePath = AppDomain.CurrentDomain.BaseDirectory; // Diretório base da aplicação
             var filePath = Path.Combine(basePath, "assets", "SmallVideo.mp4");
@@ -78,7 +78,7 @@ namespace FIAPX.Processamento.Tests
         public async Task ProcessFile_ShouldHandleException_WhenErrorOccurs()
         {
             // Arrange
-            var arquivoDto = new ArquivoDto { Id = Guid.NewGuid(), ContentType = "video/mp4", FileName = "teste.mp4" };
+            var arquivoDto = new ArquivoDto { Id = Guid.NewGuid(), ContentType = "video/mp4", FileName = "teste.mp4", UserId = Guid.Empty, User = new UsuarioDto { Id = Guid.Empty, Email = "teste@teste.com.br", Name = "Teste" } };
 
             _arquivoRepositoryMock.Setup(repo => repo.CreateFile(It.IsAny<Arquivo>())).ThrowsAsync(new Exception("Erro no repositório"));
 
@@ -99,7 +99,7 @@ namespace FIAPX.Processamento.Tests
         public async Task CreateFile_ShouldGiveAnException_WithInvalidInput()
         {
             // Arrange
-            var arquivoDto = new ArquivoDto { ContentType = "video/mp25", FileName = "teste.mp4" };
+            var arquivoDto = new ArquivoDto { ContentType = "video/mp25", FileName = "teste.mp4", UserId = Guid.Empty, User = new UsuarioDto { Id = Guid.Empty, Email = "teste@teste.com.br", Name = "Teste" } };
             var stream = new MemoryStream();
             var arquivo = new Arquivo(Guid.NewGuid(), "teste.mp25", "video/mp25", StatusEnum.Cadastrado, 0);
 
