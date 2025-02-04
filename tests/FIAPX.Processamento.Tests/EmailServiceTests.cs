@@ -37,7 +37,7 @@
             var body = "This is a test email.";            
 
             // Act
-            await _emailService.SendEmailAsync(senderEmail, recipientEmail, subject, body);
+            await _emailService.SendEmailAsync(recipientEmail, body);
 
             // Assert
             _sendGridClientMock.Verify(c => c.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -57,7 +57,7 @@
             var emailService = new EmailService(_sendGridClientMock.Object);
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => emailService.SendEmailAsync(senderEmail, recipientEmail, subject, body));
+            await Assert.ThrowsAsync<Exception>(() => emailService.SendEmailAsync(recipientEmail, body));
         }
     }
 }

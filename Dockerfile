@@ -8,11 +8,11 @@ RUN apk add --upgrade --no-cache ca-certificates && update-ca-certificates
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-COPY ../../*.sln /
+COPY src/FIAPX.Processamento.Api/FIAPX.Processamento.sln /
 COPY src ./src
 
 # Restoring just the api project will cause a chain reaction that will resolve the nuget dependencies from all class libraries.
-RUN dotnet restore src/FIAPX.Processamento.Api
+RUN dotnet restore src/FIAPX.Processamento.Api/FIAPX.Processamento.Api.csproj
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release

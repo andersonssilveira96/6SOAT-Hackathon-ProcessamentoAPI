@@ -52,7 +52,7 @@ namespace FIAPX.Processamento.Tests
             _arquivoRepositoryMock.Setup(repo => repo.CreateFile(It.IsAny<Arquivo>())).Returns(Task.FromResult(arquivo));
             _arquivoRepositoryMock.Setup(repo => repo.Update(It.IsAny<Arquivo>())).Returns(Task.FromResult(arquivo));
             _messageBrokerProducerMock.Setup(producer => producer.SendMessageAsync(It.IsAny<Arquivo>())).Returns(Task.CompletedTask);
-            _emailServiceMock.Setup(email => email.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
+            _emailServiceMock.Setup(email => email.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
 
             // Mockando S3 para retornar um objeto simulado
             _s3ClientMock
@@ -92,7 +92,7 @@ namespace FIAPX.Processamento.Tests
             _arquivoRepositoryMock.Verify(repo => repo.CreateFile(It.IsAny<Arquivo>()), Times.Once);
             _arquivoRepositoryMock.Verify(repo => repo.Update(It.IsAny<Arquivo>()), Times.Once);
             _messageBrokerProducerMock.Verify(producer => producer.SendMessageAsync(It.IsAny<Arquivo>()), Times.Once);
-            _emailServiceMock.Verify(email => email.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _emailServiceMock.Verify(email => email.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
