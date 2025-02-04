@@ -1,0 +1,70 @@
+name: build & deploy
+on:
+ push:
+    branches:
+      - master 
+jobs:
+  build:
+    name: build & test
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout do código
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Configuração do .NET
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x # Versão do .NET atualizada para 8
+
+      # Restore dependências
+      - name: Restore dependencies
+        run: dotnet restore src/FIAPX.Processamento.Api/FIAPX.Processamento.sln # Substitua pelo nome do seu arquivo .sln
+
+      # Build do projeto
+      - name: Build project
+        run: dotnet build src/FIAPX.Processamento.Api/FIAPX.Processamento.sln --no-restore --configuration Release
+
+      # Executar os testes e calcular a cobertura
+      - name: Run tests and collect coverage
+        run: dotnet test src/FIAPX.Processamento.Api/FIAPX.Processamento.sln --no-build --configuration Release --collect:"XPlat Code Coverage"  --results-directory ./TestResults
+        
+      # Instalar o ReportGenerator
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      # Gerar o relatório de cobertura
+      - name: Generate coverage report
+        run: reportgenerator -reports:./TestResults/**/coverage.cobertura.xml -targetdir:./coverage-report -reporttypes:TextSummary
+
+      # Mostrar o resumo no console
+      - name: Show coverage summary
+        run: cat ./coverage-report/Summary.txt
+        
+      # Publicar relatório de cobertura
+      - name: Upload code coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: '**/coverage.cobertura.xml'
+
+  docker-build:
+    needs: build   
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: docker login
+        env:
+          DOCKER_USER: ${{secrets.DOCKER_USER}}
+          DOCKER_PAT: ${{secrets.DOCKER_PAT}}
+        run: |
+          docker login -u $DOCKER_USER -p $DOCKER_PAT 
+      - name: Build and Push API Image
+        working-directory: .
+        run: |
+          TAG=$(date +%Y%m%d%H%M%S)
+          docker build -t ${{secrets.DOCKER_USER}}/fiapx-processamento:latest -t ${{secrets.DOCKER_USER}}/fiapx-processamento:$TAG . --no-cache
+          docker push ${{secrets.DOCKER_USER}}/fiapx-processamento:$TAG
+          docker push ${{secrets.DOCKER_USER}}/fiapx-processamento:latest            
