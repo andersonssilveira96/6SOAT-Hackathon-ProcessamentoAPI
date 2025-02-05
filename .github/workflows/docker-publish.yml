@@ -22,6 +22,10 @@ jobs:
       # Restore dependências
       - name: Restore dependencies
         run: dotnet restore src/FIAPX.Processamento.Api/FIAPX.Processamento.sln # Substitua pelo nome do seu arquivo .sln
+        
+      # Instalar FFMPeg para execução dos testes
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       # Build do projeto
       - name: Build project
