@@ -40,11 +40,9 @@ builder.Services.AddSingleton<ISendGridClient>(provider =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+
+app.UseSwaggerUI();
 
 // Invocar o serviço
 using var scope = app.Services.CreateScope();
