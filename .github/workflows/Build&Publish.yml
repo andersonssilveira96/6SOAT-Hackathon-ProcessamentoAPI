@@ -74,3 +74,18 @@ jobs:
           docker build -t ${{secrets.DOCKER_USER}}/fiapx-processamento:latest -t ${{secrets.DOCKER_USER}}/fiapx-processamento:$TAG . --no-cache
           docker push ${{secrets.DOCKER_USER}}/fiapx-processamento:$TAG
           docker push ${{secrets.DOCKER_USER}}/fiapx-processamento:latest            
+  deploy-aws:      
+     needs: docker-build             
+     runs-on: ubuntu-latest     
+     steps:
+      - name: Deploy EKS
+        env:
+          TOKEN: ${{ secrets.GTH_TOKEN  }}
+        run: |
+          curl -L \
+          -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: token $TOKEN" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/andersonssilveira96/6SOAT-Hackathon-Infraestructure/actions/workflows/k8s.yml/dispatches \
+          -d '{"ref":"master"}'
