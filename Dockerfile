@@ -1,11 +1,11 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS base
-USER app
 WORKDIR /app
 EXPOSE 8080
+RUN apk add --no-cache ffmpeg
 
+USER app
 FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 RUN apk add --upgrade --no-cache ca-certificates && update-ca-certificates
-RUN apk add --no-cache ffmpeg
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
